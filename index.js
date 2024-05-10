@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config()
 const app = express()
 const port = process.env.PORT || 5000;
@@ -24,12 +24,56 @@ async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
+
+    const database = client.db("queriesDB");
+    const queriesCollection = database.collection("queries");
+    app.get("/queries", async(req, res) => {
+        let query = {};
+        if(req.query?.email) {
+           query = {email: req.query.email}
+        }
+        const result = await queriesCollection.find(query).toArray()
+        res.send(result)
+     })
+
+     app.get("/queries/:id", async(req, res) => {
+          const id = req.params.id
+          const query = {_id: new ObjectId(id)}
+          const result = await queriesCollection.findOne(query)
+          res.send(result)
+     })
+
+    app.post("/queries", async(req, res) => {
+        const queries =  req.body
+        const result = await queriesCollection.insertOne(queries)
+        res.send(result)
+    })
+
+    app.put("/queries/:id", async(req, res) => {
+        const id = req.params.id
+        const queries = req.body
+        const filter = {_id: new ObjectId(id)};
+        const options = { upsert: true };
+        const updateDoc = {
+          $set: {
+            productName: queries.productName, 
+            productBrand: queries.productBrand, 
+            queryTitle: queries.queryTitle, 
+            boycottingDetails: queries.boycottingDetails, 
+            imageURL: queries.imageURL
+          },
+        };
+        const result = await queriesCollection.updateOne(filter, updateDoc, options);
+        res.send(result)
+    })
+
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     // Ensures that the client will close when you finish/error
-    await client.close();
+    // await client.close();
   }
 }
 run().catch(console.dir);
