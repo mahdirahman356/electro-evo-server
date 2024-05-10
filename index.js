@@ -27,47 +27,60 @@ async function run() {
 
     const database = client.db("queriesDB");
     const queriesCollection = database.collection("queries");
-    app.get("/queries", async(req, res) => {
-        let query = {};
-        if(req.query?.email) {
-           query = {email: req.query.email}
-        }
-        const result = await queriesCollection.find(query).toArray()
-        res.send(result)
-     })
 
-     app.get("/queries/:id", async(req, res) => {
-          const id = req.params.id
-          const query = {_id: new ObjectId(id)}
-          const result = await queriesCollection.findOne(query)
-          res.send(result)
-     })
+    app.get("/queries", async (req, res) => {
+      const search = req.query.search;
+      const email = req.query.email;
 
-    app.post("/queries", async(req, res) => {
-        const queries =  req.body
-        const result = await queriesCollection.insertOne(queries)
-        res.send(result)
+      let query = {};
+      if (search) {
+        query.$or = [
+          { productName: { $regex: search, $options: 'i' } },
+        ];
+      }
+
+      if (email) {
+        query.email = email;
+      }
+
+      const options = {};
+
+      const result = await queriesCollection.find(query, options).toArray();
+      res.send(result);
     })
 
-    app.put("/queries/:id", async(req, res) => {
-        const id = req.params.id
-        const queries = req.body
-        const filter = {_id: new ObjectId(id)};
-        const options = { upsert: true };
-        const updateDoc = {
-          $set: {
-            productName: queries.productName, 
-            productBrand: queries.productBrand, 
-            queryTitle: queries.queryTitle, 
-            boycottingDetails: queries.boycottingDetails, 
-            imageURL: queries.imageURL
-          },
-        };
-        const result = await queriesCollection.updateOne(filter, updateDoc, options);
-        res.send(result)
+    app.get("/queries/:id", async (req, res) => {
+      const id = req.params.id
+      const query = { _id: new ObjectId(id) }
+      const result = await queriesCollection.findOne(query)
+      res.send(result)
     })
 
-    app.delete("/queries/:id", async(req, res) => {
+    app.post("/queries", async (req, res) => {
+      const queries = req.body
+      const result = await queriesCollection.insertOne(queries)
+      res.send(result)
+    })
+
+    app.put("/queries/:id", async (req, res) => {
+      const id = req.params.id
+      const queries = req.body
+      const filter = { _id: new ObjectId(id) };
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          productName: queries.productName,
+          productBrand: queries.productBrand,
+          queryTitle: queries.queryTitle,
+          boycottingDetails: queries.boycottingDetails,
+          imageURL: queries.imageURL
+        },
+      };
+      const result = await queriesCollection.updateOne(filter, updateDoc, options);
+      res.send(result)
+    })
+
+    app.delete("/queries/:id", async (req, res) => {
       const id = req.params.id
       const query = { _id: new ObjectId(id) };
       const result = await queriesCollection.deleteOne(query);
@@ -88,9 +101,9 @@ run().catch(console.dir);
 
 
 app.get("/", (req, res) => {
-    res.send("ElectroEvo server")
+  res.send("ElectroEvo server")
 })
 
 app.listen(port, () => {
-    console.log("server is runing")
+  console.log("server is runing")
 })
