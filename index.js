@@ -1,3 +1,4 @@
+
 const express = require('express');
 const cors = require('cors');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
@@ -106,11 +107,23 @@ async function run() {
       res.send(result)
     })
 
+    app.get("/recommend", async(req, res) => {
+      const result = await recommendCollection.find().toArray()
+      res.send(result)
+    })
+
     app.get("/recommend/myRecommrnd/:email", async(req, res) => {
       query = { recommendationEmail : req.params.email}
       const result = await recommendCollection.find(query).toArray()
       res.send(result)
     })
+
+    app.get("/recommend/:queriesId", async(req, res) => {
+      query = { queriesId : req.params.queriesId}
+      const result = await recommendCollection.find(query).toArray()
+      res.send(result)
+    }) 
+
     app.delete("/recommend/:id", async (req, res) => {
       const id = req.params.id
       const query = { _id: new ObjectId(id) };
@@ -138,4 +151,3 @@ app.get("/", (req, res) => {
 app.listen(port, () => {
   console.log("server is runing")
 })
-
