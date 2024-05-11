@@ -23,7 +23,7 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
 
     const database = client.db("queriesDB");
     const queriesCollection = database.collection("queries");
@@ -63,12 +63,6 @@ async function run() {
       res.send(result)
     })
 
-    app.post("/recommend", async(req, res) => {
-      const queries = req.body
-      const result = await recommendCollection.insertOne(queries)
-      res.send(result)
-    })
-
     app.put("/queries/:id", async (req, res) => {
       const id = req.params.id
       const queries = req.body
@@ -105,6 +99,25 @@ async function run() {
       res.send(result)
     })
 
+    // recommend
+    app.post("/recommend", async(req, res) => {
+      const queries = req.body
+      const result = await recommendCollection.insertOne(queries)
+      res.send(result)
+    })
+
+    app.get("/recommend/myRecommrnd/:email", async(req, res) => {
+      query = { recommendationEmail : req.params.email}
+      const result = await recommendCollection.find(query).toArray()
+      res.send(result)
+    })
+    app.delete("/recommend/:id", async (req, res) => {
+      const id = req.params.id
+      const query = { _id: new ObjectId(id) };
+      const result = await recommendCollection.deleteOne(query);
+      res.send(result)
+    })
+
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
@@ -125,3 +138,4 @@ app.get("/", (req, res) => {
 app.listen(port, () => {
   console.log("server is runing")
 })
+
