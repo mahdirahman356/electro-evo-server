@@ -27,6 +27,7 @@ async function run() {
 
     const database = client.db("queriesDB");
     const queriesCollection = database.collection("queries");
+    const recommendCollection = database.collection("recommend");
 
     app.get("/queries", async (req, res) => {
       const search = req.query.search;
@@ -62,6 +63,12 @@ async function run() {
       res.send(result)
     })
 
+    app.post("/recommend", async(req, res) => {
+      const queries = req.body
+      const result = await recommendCollection.insertOne(queries)
+      res.send(result)
+    })
+
     app.put("/queries/:id", async (req, res) => {
       const id = req.params.id
       const queries = req.body
@@ -77,6 +84,17 @@ async function run() {
         },
       };
       const result = await queriesCollection.updateOne(filter, updateDoc, options);
+      res.send(result)
+    })
+
+    app.patch("/queries/:id", async (req, res) => {
+      const id = req.params.id
+      const queries = req.body
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: queries,
+      };
+      const result = await queriesCollection.updateOne(filter, updateDoc);
       res.send(result)
     })
 
