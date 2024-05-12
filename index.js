@@ -1,15 +1,18 @@
 
 const express = require('express');
 const cors = require('cors');
+const jwt = require('jsonwebtoken');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config()
 const app = express()
 const port = process.env.PORT || 5000;
 
-app.use(cors())
+app.use(cors({
+  origin: ['http://localhost:5173'],
+  credentials: true
+}))
 app.use(express.json())
 
-console.log(process.env.DB_USER)
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.rz0kihv.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -30,6 +33,24 @@ async function run() {
     const queriesCollection = database.collection("queries");
     const recommendCollection = database.collection("recommend");
 
+    // jsonwebtoken
+    app.post("/jwt", (req, res) => {
+      const user = req.body
+      let token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
+      res.cookie("token", token, {
+        httpOnly: true,
+        secure: true,
+        sameSite: "none"
+      })
+        .send({ success: true })
+    })
+
+    app.post('/signout', (req, res) => {
+      res.clearCookie('token', { maxAge: 0 })
+        .send({ success: true })
+    })
+
+    // queries
     app.get("/queries", async (req, res) => {
       const search = req.query.search;
       const email = req.query.email;
@@ -101,34 +122,34 @@ async function run() {
     })
 
     // recommend
-    app.post("/recommend", async(req, res) => {
+    app.post("/recommend", async (req, res) => {
       const queries = req.body
       const result = await recommendCollection.insertOne(queries)
       res.send(result)
     })
 
-    app.get("/recommend", async(req, res) => {
+    app.get("/recommend", async (req, res) => {
       const result = await recommendCollection.find().toArray()
       res.send(result)
     })
 
-    app.get("/recommend/myRecommrnd/:email", async(req, res) => {
-      query = { recommendationEmail : req.params.email}
+    app.get("/recommend/myRecommrnd/:email", async (req, res) => {
+      query = { recommendationEmail: req.params.email }
       const result = await recommendCollection.find(query).toArray()
       res.send(result)
     })
 
-    app.get("/recommend/RecommrndForMe/:email", async(req, res) => {
-      query = { email : req.params.email}
+    app.get("/recommend/RecommendForMe/:email", async (req, res) => {
+      query = { email: req.params.email }
       const result = await recommendCollection.find(query).toArray()
       res.send(result)
     })
 
-    app.get("/recommend/:queriesId", async(req, res) => {
-      query = { queriesId : req.params.queriesId}
+    app.get("/recommend/:queriesId", async (req, res) => {
+      query = { queriesId: req.params.queriesId }
       const result = await recommendCollection.find(query).toArray()
       res.send(result)
-    }) 
+    })
 
     app.delete("/recommend/:id", async (req, res) => {
       const id = req.params.id
