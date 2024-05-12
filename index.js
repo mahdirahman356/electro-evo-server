@@ -118,6 +118,12 @@ async function run() {
       res.send(result)
     })
 
+    app.get("/recommend/RecommrndForMe/:email", async(req, res) => {
+      query = { email : req.params.email}
+      const result = await recommendCollection.find(query).toArray()
+      res.send(result)
+    })
+
     app.get("/recommend/:queriesId", async(req, res) => {
       query = { queriesId : req.params.queriesId}
       const result = await recommendCollection.find(query).toArray()
