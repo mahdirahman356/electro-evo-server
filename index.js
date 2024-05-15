@@ -132,13 +132,32 @@ async function run() {
     })
 
     app.patch("/queries/:id", async (req, res) => {
-      const id = req.params.id
-      const queries = req.body
-      const filter = { _id: new ObjectId(id) };
+      const id = req.params.id;
+      console.log(id);
+      const currentObject = await queriesCollection.findOne({_id: new ObjectId(id)});
+      console.log(currentObject);
       const updateDoc = {
-        $set: {recommendationCount: queries.recommendationCount},
+        $set: { recommendationCount: (currentObject.recommendationCount || 0) + 1 },
       };
-      const result = await queriesCollection.updateOne(filter, updateDoc);
+      const result = await queriesCollection.updateOne(
+        { _id: new ObjectId(id) },
+        updateDoc
+      );
+      res.send(result)
+    })
+
+    app.patch("/queries/desRecom/:id", async (req, res) => {
+      const id = req.params.id;
+      console.log(id);
+      const currentObject = await queriesCollection.findOne({_id: new ObjectId(id)});
+      console.log(currentObject);
+      const updateDoc = {
+        $set: { recommendationCount: (currentObject.recommendationCount || 0) - 1 },
+      };
+      const result = await queriesCollection.updateOne(
+        { _id: new ObjectId(id) },
+        updateDoc
+      );
       res.send(result)
     })
 
@@ -151,7 +170,8 @@ async function run() {
 
     // recommend
     app.post("/recommend", async (req, res) => {
-      const queries = req.body
+      const queries = req.body;
+      // console.log(queries);
       const result = await recommendCollection.insertOne(queries)
       res.send(result)
     })
