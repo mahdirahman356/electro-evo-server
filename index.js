@@ -59,7 +59,7 @@ async function run() {
     // jsonwebtoken
     app.post("/jwt", (req, res) => {
       const user = req.body
-      let token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
+      let token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1d' });
       res.cookie("token", token, {
         httpOnly: true,
         secure: true,
@@ -76,13 +76,11 @@ async function run() {
     // queries
     app.get("/queries", async (req, res) => {
       const search = req.query.search;
-      const email = req.query.email;
-
       let query = {};
       if (search) {
-        query.$or = [
-          { productName: { $regex: search, $options: 'i' } },
-        ];
+        query.$or =[ 
+          { productName: { $regex: search, $options: 'i' } }
+        ]
       }
 
       const options = {};
@@ -90,6 +88,8 @@ async function run() {
       const result = await queriesCollection.find(query, options).toArray();
       res.send(result);
     })
+
+    
 
     app.get("/queries/email/:email",verifyToken, async (req, res) => {
       if(req.user.email !== req.params.email){
@@ -171,7 +171,6 @@ async function run() {
     // recommend
     app.post("/recommend", async (req, res) => {
       const queries = req.body;
-      // console.log(queries);
       const result = await recommendCollection.insertOne(queries)
       res.send(result)
     })
